@@ -2,7 +2,8 @@ import userActions from "./constants";
 
 const initialState = {
     connected: false,
-    username: "Michaela",
+    username: "",
+    image: "",
 };
 
 export default function userReducer(state = initialState, action) {
@@ -11,11 +12,13 @@ export default function userReducer(state = initialState, action) {
       return {
         ...state,
         connected: true,
+        username: action.username,
       };
     case userActions.SIGN_OUT:
       return {
         ...state,
         connected: false,
+        username: "",
       };
     default:
       return state;

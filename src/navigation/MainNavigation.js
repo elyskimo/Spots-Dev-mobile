@@ -6,7 +6,6 @@ import { createStackNavigator } from "@react-navigation/stack";
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { connect } from "react-redux";
 import { bindActionCreators } from "redux";
-import List from "@screens/List";
 import Map from "@screens/Map";
 import AddSpot from "@screens/AddSpot";
 import Profile from "@screens/Profile";
