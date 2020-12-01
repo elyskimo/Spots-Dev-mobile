@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {StyleSheet, Text, View} from 'react-native';
 // import {connect} from "react-redux";
 // import { connectUser, disconnectUser } from "@redux/user/actions";
@@ -23,6 +23,8 @@ const Map = () => {
     ];
 
     const [searchValue, setSearchValue] = useState(false);
+    const [isSettingSpot, setIsSettingSpot] = useState(false);
+    const [region, setRegion] = useState({lat: 44.837987, lon: -0.57922});
 
     const search = () => {
       console.log('search',searchValue)  ;
@@ -68,22 +70,70 @@ const Map = () => {
         return color;
     };
 
+    const newSpot = () => {
+      setIsSettingSpot(true);
+      console.log('new spoooooooooot',region);
+      markers.push({name:"" ,latitude: region.lat,longitude: region.lon, type:"", url: ""});
+      console.log('markeeeeeers',markers);
+    };
+
+    const regionChange = (r) => {
+        console.log('regioooooon',r);
+        setRegion({lat: r.latitude, lon: r.longitude});
+        if (isSettingSpot) {
+            markers[markers.length - 1].latitude = r.latitude;
+            markers[markers.length - 1].longitude = r.longitude;
+        }
+    };
+
+    const cancelSpot = () => {
+        setIsSettingSpot(false);
+        markers.pop();
+        console.log('markeeeeeers',markers);
+    };
+
+    const saveSpot = () => {
+        setIsSettingSpot(false);
+    };
+
+    // useEffect(() => {
+    //     Geolocation.getCurrentPosition(
+    //         (position) => {
+    //             console.warn(position.coords.latitude);
+    //             console.warn(position.coords.longitude);
+    //             this.setState({
+    //                 region: {
+    //                     latitude: position.coords.latitude,
+    //                     longitude: position.coords.longitude,
+    //                     latitudeDelta: 0.02,
+    //                     longitudeDelta: 0,
+    //                 }
+    //             });
+    //         },
+    //         (error) => {
+    //             console.warn(error.code, error.message);
+    //         },
+    //         {enableHighAccuracy: true, timeout: 20000, maximumAge: 1000},
+    //     )
+    // });
+
     return (
         <View style={styles.container}>
             <MapView style={styles.map}
                      zoomEnabled={true}
+                     showsUserLocation={true}
                      region={{
-                         latitude:44.837789,
-                         longitude:-0.57918,
+                         latitude:region.lat,
+                         longitude:region.lon,
                          latitudeDelta:0.1,
                          longitudeDelta:0.1
                      }}
+                     onRegionChangeComplete={(r) => regionChange(r)}
             >
                 {
                     markers.map(marker =>(
                         <Marker key= {marker.name}
                                 coordinate={{ latitude: marker.latitude, longitude: marker.longitude}}
-                                description={() => <View><Text>hello</Text></View>}
                         >
                             <View>
                                 <Icon type="MaterialCommunityIcons" name="map-marker" style={{fontSize: 35, color: getPinColor(marker.type)}} />
@@ -117,6 +167,24 @@ const Map = () => {
                         <Icon name="ios-search" />
                     </Button>
                 </Item>
+            </View>
+            <View>
+                {
+                    isSettingSpot ?
+                        <View style={{flexDirection: 'row',alignSelf: 'flex-start'}}>
+                            <Button rounded danger style={{marginBottom: 15,marginHorizontal:5}} onPress={() => cancelSpot()}>
+                                <Icon type="FontAwesome5" name="times"/>
+                            </Button>
+                            <Button rounded success style={{marginBottom: 15,marginHorizontal:5}}>
+                                <Icon type="FontAwesome5" name="check" style={{fontSize:18,}}/>
+                            </Button>
+                        </View>
+                        :
+                        <Button rounded dark style={{marginBottom: 15}} onPress={() => newSpot()}>
+                            <Icon type="MaterialCommunityIcons" name="plus"/>
+                        </Button>
+                }
+
             </View>
         </View>
     );
