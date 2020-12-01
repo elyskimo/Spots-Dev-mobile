@@ -9,7 +9,7 @@ import { FaMapMarkerAlt, FaBeer } from "react-icons/fa";
 
 const Map = () => {
 
-    const coordinates = [
+    const markers = [
         { name : '1', latitude: 44.837789 , longitude: -0.57918 , type: "cafe", url: "www.google.fr"},
         { name : '2', latitude: 44.858889, longitude: -0.59918 , type: "bakery", url: "www.google.fr"},
         { name : '3', latitude: 44.827789, longitude: -0.52918, type: "bar", url: "www.google.fr"},
@@ -80,7 +80,7 @@ const Map = () => {
                      }}
             >
                 {
-                    coordinates.map(marker =>(
+                    markers.map(marker =>(
                         <Marker key= {marker.name}
                                 coordinate={{ latitude: marker.latitude, longitude: marker.longitude}}
                                 description={() => <View><Text>hello</Text></View>}
