@@ -9,7 +9,11 @@ import { FaMapMarkerAlt, FaBeer } from "react-icons/fa";
 
 const Map = () => {
 
-    const markers = [
+
+    const [searchValue, setSearchValue] = useState(false);
+    const [isSettingSpot, setIsSettingSpot] = useState(false);
+    const [region, setRegion] = useState({lat: 44.837987, lon: -0.57922, latD: 0.1, lonD: 0.1,});
+    const [markers, setMarkers] = useState([
         { name : '1', latitude: 44.837789 , longitude: -0.57918 , type: "cafe", url: "www.google.fr"},
         { name : '2', latitude: 44.858889, longitude: -0.59918 , type: "bakery", url: "www.google.fr"},
         { name : '3', latitude: 44.827789, longitude: -0.52918, type: "bar", url: "www.google.fr"},
@@ -20,11 +24,7 @@ const Map = () => {
         { name : '8', latitude: 44.840789, longitude: -0.60999, type: "post_office", url: ""},
         { name : '9', latitude: 44.857789, longitude: -0.52918 , type: "school", url: ""},
         { name : '10', latitude: 44.867789, longitude: -0.54918, type: "restaurant", url: ""},
-    ];
-
-    const [searchValue, setSearchValue] = useState(false);
-    const [isSettingSpot, setIsSettingSpot] = useState(false);
-    const [region, setRegion] = useState({lat: 44.837987, lon: -0.57922});
+    ]);
 
     const search = () => {
       console.log('search',searchValue)  ;
@@ -70,30 +70,28 @@ const Map = () => {
         return color;
     };
 
-    const newSpot = () => {
-      setIsSettingSpot(true);
-      console.log('new spoooooooooot',region);
-      markers.push({name:"" ,latitude: region.lat,longitude: region.lon, type:"", url: ""});
-      console.log('markeeeeeers',markers);
-    };
+    // const newSpot = () => {
+    //   setIsSettingSpot(true);
+    //   markers.push({name:"" ,latitude: region.lat,longitude: region.lon, type:"", url: ""});
+    // };
 
     const regionChange = (r) => {
-        console.log('regioooooon',r);
-        setRegion({lat: r.latitude, lon: r.longitude});
-        if (isSettingSpot) {
-            markers[markers.length - 1].latitude = r.latitude;
-            markers[markers.length - 1].longitude = r.longitude;
-        }
+        setRegion({
+            lat: r.latitude,
+            lon: r.longitude,
+            latD: r.latitudeDelta,
+            lonD: r.longitudeDelta
+        });
     };
 
     const cancelSpot = () => {
         setIsSettingSpot(false);
-        markers.pop();
-        console.log('markeeeeeers',markers);
     };
 
     const saveSpot = () => {
         setIsSettingSpot(false);
+        let newMarker = {name:"" ,latitude: region.lat,longitude: region.lon, type:"", url: ""};
+        setMarkers([...markers,newMarker]);
     };
 
     // useEffect(() => {
@@ -125,14 +123,14 @@ const Map = () => {
                      region={{
                          latitude:region.lat,
                          longitude:region.lon,
-                         latitudeDelta:0.1,
-                         longitudeDelta:0.1
+                         latitudeDelta:region.latD,
+                         longitudeDelta:region.lonD
                      }}
                      onRegionChangeComplete={(r) => regionChange(r)}
             >
                 {
-                    markers.map(marker =>(
-                        <Marker key= {marker.name}
+                    markers.map((marker,key) =>(
+                        <Marker key= {key}
                                 coordinate={{ latitude: marker.latitude, longitude: marker.longitude}}
                         >
                             <View>
@@ -153,6 +151,17 @@ const Map = () => {
                                             <Text style={{color: "#fff",fontSize:20}}>Go to</Text>
                                         </Button>
                                     )}
+                                    {
+                                        marker.type.length === 0 && (
+                                            <Button block
+                                                    color={getPinColor(marker.type)}
+                                                    style={styles.popupBtn}
+                                                    onPress={() => {console.log(marker.url)}}
+                                            >
+                                                <Text style={{color: "#fff",fontSize:20}}>Add info</Text>
+                                            </Button>
+                                        )
+                                    }
                                 </View>
                             </MapView.Callout>
 
@@ -168,6 +177,14 @@ const Map = () => {
                     </Button>
                 </Item>
             </View>
+            {
+                isSettingSpot && (
+                    <View style={{position: 'absolute', top: 0, bottom: 0,justifyContent: 'center', alignItems: 'center'}}>
+                        <Icon type="MaterialCommunityIcons" name="map-marker" style={{fontSize: 35, color: 'black'}} />
+                    </View>
+                )
+
+            }
             <View>
                 {
                     isSettingSpot ?
@@ -175,12 +192,12 @@ const Map = () => {
                             <Button rounded danger style={{marginBottom: 15,marginHorizontal:5}} onPress={() => cancelSpot()}>
                                 <Icon type="FontAwesome5" name="times"/>
                             </Button>
-                            <Button rounded success style={{marginBottom: 15,marginHorizontal:5}}>
+                            <Button rounded success style={{marginBottom: 15,marginHorizontal:5}} onPress={() => saveSpot()}>
                                 <Icon type="FontAwesome5" name="check" style={{fontSize:18,}}/>
                             </Button>
                         </View>
                         :
-                        <Button rounded dark style={{marginBottom: 15}} onPress={() => newSpot()}>
+                        <Button rounded dark style={{marginBottom: 15}} onPress={() => setIsSettingSpot(true)}>
                             <Icon type="MaterialCommunityIcons" name="plus"/>
                         </Button>
                 }
