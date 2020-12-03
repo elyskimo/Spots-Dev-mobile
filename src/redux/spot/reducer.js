@@ -1,15 +1,15 @@
-import spotActions from "./constants";
+import spotsActions from "./constants";
 
 const initialState = {
-    spot: {name:"",latitude:null,longitude:null,type:null,url:""}
+    spots: []
 };
 
-export default function spotReducer(state = initialState, action) {
+export default function spotsReducer(state = initialState, action) {
     switch (action.type) {
-        case spotActions.ADD_SPOT:
+        case spotsActions.SET_SPOTS:
             return {
                 ...state,
-                spot: action.spot,
+                spots: action.spots,
             };
         default:
             return state;

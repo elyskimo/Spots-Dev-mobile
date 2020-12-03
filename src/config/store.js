@@ -1,38 +1,29 @@
-import { AsyncStorage } from "react-native";
+const CATEGORIES = {
+    amusement_park: {type:"amusement_park",label:"Amusement park",color:"#594AA1"},
+    bakery: {type:"bakery",label:"Bakery",color:"#8E7E69"},
+    bank: {type:"bank",label:"Bank",color:"#557A85"},
+    bar: {type:"bar",label:"Bar",color:"#BD3447"},
+    beauty_salon: {type:"beauty_salon",label:"Beauty salon",color:"#B26A72"},
+    cafe: {type:"cafe",label:"Cafe",color:"#73432A"},
+    doctor: {type:"doctor",label:"Doctor",color:"#85EAFA"},
+    florist: {type:"florist",label:"Florist",color:"#EE00EB"},
+    gas_station: {type:"gas_station",label:"Gas station",color:"#6F763E"},
+    gym: {type:"gym",label:"Gym",color:"#340951"},
+    hair_care: {type:"hair_care",label:"Hair care",color:"#CE80E4"},
+    library: {type:"library",label:"Library",color:"#E0D27E"},
+    movie_theater: {type:"movie_theater",label:"Movie theater",color:"#907CAA"},
+    museum: {type:"museum",label:"Museum",color:"#98B2A3"},
+    night_club: {type:"night_club",label:"Night club",color:"#6C3EC1"},
+    park: {type:"park",label:"Park",color:"#79d945"},
+    square: {type:"square",label:"Town square",color:"#647475"},
+    pharmacy: {type:"pharmacy",label:"Pharmacy",color:"#08fc31"},
+    post_office: {type:"post_office",label:"Post office",color:"#f5dc02"},
+    restaurant: {type:"restaurant",label:"Restaurant",color:"#E78107"},
+    shopping_mall: {type:"shopping_mall",label:"Shopping mall",color:"#A05990"},
+    spa: {type:"spa",label:"Spa",color:"#C86351"},
+    store: {type:"store",label:"Store",color:"#4375EE"},
+    supermarket: {type:"supermarket",label:"Supermarket",color:"#2C07FB"},
+    zoo: {type:"zoo",label:"Zoo",color:"#057A34"},
+};
 
-// export default MOODS = [
-//     {id:1,mood:5,title:"Parfait"},
-//     // {id:2,mood:4,title:"Bien"},
-//     // {id:3,mood:3,title:"Normal"},
-//     // {id:4,mood:2,title:"Pas bien"},
-//     // {id:5,mood:1,title:"Mal"},
-// ];
-
-// export const getItems = async (key) => {
-//     try {
-//         const values = await AsyncStorage.getItem(key);
-//         return JSON.parse(values);
-//
-//     } catch (e) {
-//         console.log('ERROR STORE.JS getItems- ',e.toString());
-//     }
-// }
-//
-// export const setItems = async (key,values) => {
-//     try {
-//         const values = await AsyncStorage.setItem(key,JSON.stringify(values));
-//
-//     } catch (e) {
-//         console.log('ERROR STORE.JS setItems - ',e.toString());
-//     }
-// }
-//
-// export const removeItem = async (key) => {
-//     try {
-//         await AsyncStorage.removeItem(key);
-//         return true;
-//     }
-//     catch(exception) {
-//         return false;
-//     }
-// }
+export default CATEGORIES;

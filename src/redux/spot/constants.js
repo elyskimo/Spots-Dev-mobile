@@ -1,5 +1,5 @@
-const spotActions = {
-    ADD_SPOT: "ADD_SPOT",
+const spotsActions = {
+    SET_SPOTS: "SET_SPOTS",
 };
 
-export default spotActions;
+export default spotsActions;

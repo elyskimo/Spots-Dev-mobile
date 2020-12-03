@@ -1,15 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import {StyleSheet, Text, View} from 'react-native';
-// import {connect} from "react-redux";
-// import { connectUser, disconnectUser } from "@redux/user/actions";
-// import { bindActionCreators } from "redux";
+import {StyleSheet, Text, View, Modal} from 'react-native';
+import { connect } from "react-redux";
+import { bindActionCreators } from "redux";
+import { addSpot, setSpots } from "@redux/spot/actions";
 import MapView, { Marker, Callout } from 'react-native-maps';
-import { Item, Input, Icon, Button } from 'native-base';
-import { FaMapMarkerAlt, FaBeer } from "react-icons/fa";
+import {Item, Input, Icon, Button, Label, Picker} from 'native-base';
+import * as firebase from "firebase";
+import * as Linking from 'expo-linking';
+import * as WebBrowser from 'expo-web-browser';
+import CATEGORIES from "@config/store";
 
-const Map = () => {
+const Map = (props) => {
 
-
+    const { addSpot, setSpots, spots, user } = props;
+    const [modalVisible, setModalVisible] = useState(false);
+    const [spotName, setSpotName] = useState("");
+    const [spotType, setSpotType] = useState("");
+    const [spotUrl, setSpotUrl] = useState("");
+    const [spotToModal, setSpotToModal] = useState({ name : '', latitude: 44.837789 , longitude: -0.57918 , type: "", url: ""});
     const [searchValue, setSearchValue] = useState(false);
     const [isSettingSpot, setIsSettingSpot] = useState(false);
     const [region, setRegion] = useState({lat: 44.837987, lon: -0.57922, latD: 0.1, lonD: 0.1,});
@@ -22,7 +30,7 @@ const Map = () => {
         { name : '6', latitude: 44.825789, longitude: -0.56918, type: "museum", url: ""},
         { name : '7', latitude: 44.820789, longitude: -0.59918, type: "pharmacy", url: ""},
         { name : '8', latitude: 44.840789, longitude: -0.60999, type: "post_office", url: ""},
-        { name : '9', latitude: 44.857789, longitude: -0.52918 , type: "school", url: ""},
+        { name : '9', latitude: 44.857789, longitude: -0.52918 , type: "night_club", url: ""},
         { name : '10', latitude: 44.867789, longitude: -0.54918, type: "restaurant", url: ""},
     ]);
 
@@ -31,49 +39,9 @@ const Map = () => {
     };
 
     const getPinColor = (type) => {
-        let color = "";
-        switch(type) {
-            case "cafe" :
-                color = "brown";
-                break;
-            case "bakery" :
-                color = "gray";
-                break;
-            case "bar" :
-                color = "red";
-                break;
-            case "store" :
-                color = "blue";
-                break;
-            case "park" :
-                color = "green";
-                break;
-            case "museum" :
-                color = "darkblue";
-                break;
-            case "pharmacy" :
-                color = "limegreen";
-                break;
-            case "post_office" :
-                color = "gold";
-                break;
-            case "school" :
-                color = "purple";
-                break;
-            case "restaurant" :
-                color = "orange";
-                break;
-            default :
-                color = "black";
-        }
-
-        return color;
+        let category = CATEGORIES[type];
+        return category ? category.color : 'silver';
     };
-
-    // const newSpot = () => {
-    //   setIsSettingSpot(true);
-    //   markers.push({name:"" ,latitude: region.lat,longitude: region.lon, type:"", url: ""});
-    // };
 
     const regionChange = (r) => {
         setRegion({
@@ -84,36 +52,71 @@ const Map = () => {
         });
     };
 
-    const cancelSpot = () => {
-        setIsSettingSpot(false);
+    const saveSpot = () => {
+        let tmpSpot = spotToModal;
+
+        tmpSpot.name = spotName;
+        tmpSpot.type = spotType;
+        tmpSpot.url = spotUrl;
+
+        // addSpot(tmpSpot);
+        setMarkers([...markers,tmpSpot]);
+        addSpot(tmpSpot);
+
+        setModalVisible(false);
+        let userId = firebase.auth().currentUser.uid;
+        firebase.database().ref('/spot/' + userId).push(tmpSpot).then(() => {
+            setSpotName("");
+            setSpotType("");
+            setSpotUrl("");
+        });
+
     };
 
-    const saveSpot = () => {
+    const openModal = () => {
         setIsSettingSpot(false);
         let newMarker = {name:"" ,latitude: region.lat,longitude: region.lon, type:"", url: ""};
-        setMarkers([...markers,newMarker]);
+        setSpotToModal(newMarker);
+        setModalVisible(true);
     };
 
-    // useEffect(() => {
-    //     Geolocation.getCurrentPosition(
-    //         (position) => {
-    //             console.warn(position.coords.latitude);
-    //             console.warn(position.coords.longitude);
-    //             this.setState({
-    //                 region: {
-    //                     latitude: position.coords.latitude,
-    //                     longitude: position.coords.longitude,
-    //                     latitudeDelta: 0.02,
-    //                     longitudeDelta: 0,
-    //                 }
-    //             });
-    //         },
-    //         (error) => {
-    //             console.warn(error.code, error.message);
-    //         },
-    //         {enableHighAccuracy: true, timeout: 20000, maximumAge: 1000},
-    //     )
-    // });
+    const cancelModal = () => {
+        setIsSettingSpot(false);
+        setModalVisible(false);
+    };
+
+    const loadSpots = () => {
+        firebase.database().ref().child('spot').once('value').then(res => {
+            const vals = res.val();
+            let tmpSpots = [];
+            for (let uid in vals) {
+                Object.entries(vals[uid]).map(([key,val]) => {
+                    let s = val;
+                    s.uid = uid;
+                    tmpSpots.push(s);
+                })
+
+            }
+            setMarkers(tmpSpots);
+            setSpots(tmpSpots);
+        });
+    }
+
+    const openUrl = async (url) => {
+        console.log('tvoja mamamaaaaa');
+        await WebBrowser.openBrowserAsync(url);
+    }
+    useEffect( () => {
+        navigator.geolocation.getCurrentPosition(
+            position => {
+                setRegion({lat: position.coords.latitude, lon: position.coords.longitude, latD: 0.1, lonD: 0.1,})
+            },
+            error => {console.log(error);},
+            {enableHighAccuracy: true, timeout: 2000, maximumAge:1000}
+        );
+        loadSpots();
+
+    },[]);
 
     return (
         <View style={styles.container}>
@@ -136,19 +139,18 @@ const Map = () => {
                             <View>
                                 <Icon type="MaterialCommunityIcons" name="map-marker" style={{fontSize: 35, color: getPinColor(marker.type)}} />
                             </View>
-                            <MapView.Callout>
+                            <Callout>
                                 <View style={styles.popup}>
-                                    <View style={styles.popupDesc}>
+                                    <View style={{padding:5}}>
                                         <Text>Name: { marker.name }</Text>
                                         <Text>Category: { marker.type }</Text>
                                     </View>
                                     { marker.url.length>0 && (
                                         <Button block
-                                                color={getPinColor(marker.type)}
-                                                style={styles.popupBtn}
-                                                onPress={() => {console.log(marker.url)}}
+                                                style={[styles.popupBtn,{color:getPinColor(marker.type)}]}
+                                                onPress={() => openUrl(marker.url)}
                                         >
-                                            <Text style={{color: "#fff",fontSize:20}}>Go to</Text>
+                                            <Text style={{color: "#fff",fontSize:20}}>Web site</Text>
                                         </Button>
                                     )}
                                     {
@@ -163,7 +165,7 @@ const Map = () => {
                                         )
                                     }
                                 </View>
-                            </MapView.Callout>
+                            </Callout>
 
                         </Marker>
                     ))
@@ -180,6 +182,7 @@ const Map = () => {
             {
                 isSettingSpot && (
                     <View style={{position: 'absolute', top: 0, bottom: 0,justifyContent: 'center', alignItems: 'center'}}>
+                        <Text>Move the map to place the marker</Text>
                         <Icon type="MaterialCommunityIcons" name="map-marker" style={{fontSize: 35, color: 'black'}} />
                     </View>
                 )
@@ -189,10 +192,10 @@ const Map = () => {
                 {
                     isSettingSpot ?
                         <View style={{flexDirection: 'row',alignSelf: 'flex-start'}}>
-                            <Button rounded danger style={{marginBottom: 15,marginHorizontal:5}} onPress={() => cancelSpot()}>
+                            <Button rounded danger style={{marginBottom: 15,marginHorizontal:10}} onPress={() => setIsSettingSpot(false)}>
                                 <Icon type="FontAwesome5" name="times"/>
                             </Button>
-                            <Button rounded success style={{marginBottom: 15,marginHorizontal:5}} onPress={() => saveSpot()}>
+                            <Button rounded success style={{marginBottom: 15,marginHorizontal:10}} onPress={() => openModal()}>
                                 <Icon type="FontAwesome5" name="check" style={{fontSize:18,}}/>
                             </Button>
                         </View>
@@ -203,16 +206,66 @@ const Map = () => {
                 }
 
             </View>
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={modalVisible}
+            >
+                <View style={styles.centeredView}>
+                    <View style={styles.modalView}>
+                        <Text style={styles.modalText}>NEW SPOT</Text>
+                        <Item floatingLabel style={styles.modalItem}>
+                            <Label>Spot name</Label>
+                            <Input
+                                autocorrect={false}
+                                autoCapitalize="none"
+                                value={spotName}
+                                onChangeText={(val) => setSpotName(val)}
+                            />
+                        </Item>
+                        <Item picker style={styles.modalItem}>
+                            <View style={{maxWidth:'100%'}}>
+                                <Picker
+                                    mode="dropdown"
+                                    iosIcon={<Icon name="arrow-down" />}
+                                    style={{ width: '100%' }}
+                                    placeholder="Category"
+                                    placeholderStyle={{ color: "#bfc6ea" }}
+                                    placeholderIconColor="#007aff"
+                                    selectedValue={spotType}
+                                    onValueChange={(val) => setSpotType(val) }
+                                >
+                                    {
+                                        Object.entries(CATEGORIES).map(([key,cat]) => (
+                                            <Picker.Item label={cat.label} value={key}/>
+                                        ))
+                                    }
+                                </Picker>
+                            </View>
+                        </Item>
+                        <Item floatingLabel style={[styles.modalItem,{marginBottom:20}]}>
+                            <Label>Web site URL</Label>
+                            <Input
+                                autocorrect={false}
+                                autoCapitalize="none"
+                                value={spotUrl}
+                                onChangeText={(val) => setSpotUrl(val)}
+                            />
+                        </Item>
+                        <Button block success onPress={() => saveSpot()} style={{marginVertical:5}}>
+                            <Text style={{color: '#fff',fontWeight: 'bold', fontSize:16}}>Create</Text>
+                        </Button>
+                        <Button block danger onPress={() => cancelModal()} style={{marginVertical:5}}>
+                            <Text style={{color: '#fff',fontWeight: 'bold', fontSize:16}}>Cancel</Text>
+                        </Button>
+                    </View>
+                </View>
+            </Modal>
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container2: {
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-    },
     button: {
         width: 200,
         paddingVertical: 8,
@@ -256,10 +309,51 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         alignItems: "center",
     },
-    popupDesc: {
-        padding: 5,
+    centeredView: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        marginTop: 22
+    },
+    modalView: {
+        margin: 20,
+        backgroundColor: "white",
+        borderRadius: 20,
+        padding: 35,
+        alignItems: "center",
+        shadowColor: "#000",
+        shadowOffset: {
+            width: 0,
+            height: 2
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5
+    },
+    modalText: {
+        marginBottom: 15,
+        textAlign: "center"
+    },
+    modalItem: {
+        marginVertical: 5,
+        width: '80%'
     }
 });
 
 
-export default Map;
+// export default Map;
+const mapStateToProps = (state) => ({
+    spots: state.spot.spots,
+    user: state.user,
+});
+
+const mapDispatchToProps = (dispatch) =>
+    bindActionCreators(
+        {
+            addSpot,
+            setSpots
+        },
+        dispatch
+    );
+
+export default connect(mapStateToProps, mapDispatchToProps)(Map);
