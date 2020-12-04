@@ -44,13 +44,9 @@ const Login = (props) => {
     const loginUser = () => {
         firebase.auth().signInWithEmailAndPassword(email,password).then(() => {
             let userId = firebase.auth().currentUser.uid;
-            console.log("user id",userId);
             firebase.database().ref('/user/' + userId).once('value').then((snapshot) => {
-                console.log("snapshot",snapshot);
                 let name = (snapshot.val() && snapshot.val().username) || '';
-                console.log("name from snapshot",name);
-                // ...
-                connectUser(name);
+                connectUser(name,email);
             });
 
         }).catch((e) => alert("Login error",e));

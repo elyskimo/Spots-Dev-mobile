@@ -7,7 +7,7 @@ import { createDrawerNavigator } from '@react-navigation/drawer';
 import { connect } from "react-redux";
 import { bindActionCreators } from "redux";
 import Map from "@screens/Map";
-import AddSpot from "@screens/AddSpot";
+import List from "@screens/List";
 import Profile from "@screens/Profile";
 import Icon from 'react-native-vector-icons/FontAwesome';
 
@@ -49,11 +49,11 @@ const TabsNavigation = () => (
             })}
         />
         <Tabs.Screen
-            name="AddSpot"
-            component={AddSpot}
+            name="List"
+            component={List}
             options={{
                 title: () => (
-                    <Icon name={"plus-square-o"}
+                    <Icon name={"list"}
                           size={25}
                           color="#000"
                     />
@@ -61,7 +61,7 @@ const TabsNavigation = () => (
             }}
             listeners={({ navigation }) => ({
                 tabPress: () => {
-                    navigation.navigate("AddSpot");
+                    navigation.navigate("List");
                 },
             })}
         />
@@ -80,31 +80,37 @@ const StackNavigation = (props) => {
                 options={({ navigation }) => ({
                     headerTitle: null,
                     headerLeft: () => (
+                        <TouchableOpacity
+                            onPress={() => navigation.toggleDrawer()}
+                        >
+                            <Icon name={"bars"}
+                                  size={25}
+                                  color="#000"
+                                  style={{
+                                      marginLeft: 10,
+                                  }}
+                            />
+                        </TouchableOpacity>
+                    ),
+                    headerRight: () => (
                         <View style={styles.inline}>
+                            <Text style={styles.title}>{user.username}</Text>
+                            <Icon name={"circle"}
+                                  size={10}
+                                  color={colorStatus}
+                            />
                             <TouchableOpacity
-                                onPress={() => navigation.toggleDrawer()}
+                                onPress={() => navigation.navigate("Profile")}
                             >
                                 <Icon name={"user"}
                                       size={25}
                                       color="#000"
                                       style={{
-                                          marginLeft: 10,
+                                          marginRight: 10,
                                       }}
                                 />
                             </TouchableOpacity>
-                            <Icon name={"circle"}
-                                  size={10}
-                                  color={colorStatus}
-                                  style={{
-                                      marginRight: 5,
-                                  }}
-                            />
-                            <Text style={styles.title}>{user.username}</Text>
-
                         </View>
-                    ),
-                    headerRight: () => (
-                        <Text style={styles.title}>Spots</Text>
                     ),
                     headerStyle: {
                         backgroundColor: '#fff',
@@ -131,31 +137,37 @@ const StackProfileNavigation = (props) => {
                 options={({ navigation }) => ({
                     headerTitle: null,
                     headerLeft: () => (
+                        <TouchableOpacity
+                            onPress={() => navigation.toggleDrawer()}
+                        >
+                            <Icon name={"bars"}
+                                  size={25}
+                                  color="#000"
+                                  style={{
+                                      marginLeft: 10,
+                                  }}
+                            />
+                        </TouchableOpacity>
+                    ),
+                    headerRight: () => (
                         <View style={styles.inline}>
+                            <Text style={styles.title}>{user.username}</Text>
+                            <Icon name={"circle"}
+                                  size={10}
+                                  color={colorStatus}
+                            />
                             <TouchableOpacity
-                                onPress={() => navigation.toggleDrawer()}
+                                onPress={() => navigation.navigate("Profile")}
                             >
                                 <Icon name={"user"}
                                       size={25}
                                       color="#000"
                                       style={{
-                                          marginLeft: 10,
+                                          marginRight: 10,
                                       }}
                                 />
                             </TouchableOpacity>
-                            <Icon name={"circle"}
-                                  size={10}
-                                  color={colorStatus}
-                                  style={{
-                                      marginRight: 5,
-                                  }}
-                            />
-                            <Text style={styles.title}>{user.username}</Text>
-
                         </View>
-                    ),
-                    headerRight: () => (
-                        <Text style={styles.title}>Spots</Text>
                     ),
                     headerStyle: {
                         backgroundColor: '#fff',
@@ -201,7 +213,7 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 18,
         fontWeight: "700",
-        marginRight: 20,
+        marginRight: 5,
     },
     logo: {
         marginLeft: 20,

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {StyleSheet, Text, View, Modal, FlatList} from 'react-native';
+import {StyleSheet, Text, View, Modal, FlatList, Alert} from 'react-native';
 import { connect } from "react-redux";
 import { bindActionCreators } from "redux";
 import { addSpot, setSpots } from "@redux/spot/actions";
@@ -52,6 +52,14 @@ const Map = (props) => {
             latD: r.latitudeDelta,
             lonD: r.longitudeDelta
         });
+    };
+
+    const addMarker = () => {
+        if (user.connected) {
+            setIsSettingSpot(true)
+        } else {
+            alert('You have to be logged in to add a Spot');
+        }
     };
 
     const saveSpot = () => {
@@ -249,7 +257,7 @@ const Map = (props) => {
                             </Button>
                         </View>
                         :
-                        <Button rounded dark style={{marginBottom: 15}} onPress={() => setIsSettingSpot(true)}>
+                        <Button rounded dark style={{marginBottom: 15}} onPress={() => addMarker()}>
                             <Icon type="MaterialCommunityIcons" name="plus"/>
                         </Button>
                 }

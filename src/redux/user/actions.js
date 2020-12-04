@@ -1,8 +1,8 @@
 import userActions from "./constants";
 
-export function connectUser(username) {
+export function connectUser(username,email) {
   return async function (dispatch) {
-    dispatch({ type: userActions.SIGN_IN, username: username });
+    dispatch({ type: userActions.SIGN_IN, username: username, email: email });
   };
 }
 
