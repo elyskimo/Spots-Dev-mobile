@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import {StyleSheet, Text, View, Modal} from 'react-native';
+import {StyleSheet, Text, View, Modal, FlatList} from 'react-native';
 import { connect } from "react-redux";
 import { bindActionCreators } from "redux";
 import { addSpot, setSpots } from "@redux/spot/actions";
-import MapView, { Marker, Callout } from 'react-native-maps';
+import MapView, { Marker, Callout, AnimatedRegion } from 'react-native-maps';
 import {Item, Input, Icon, Button, Label, Picker} from 'native-base';
 import * as firebase from "firebase";
 import * as Linking from 'expo-linking';
@@ -18,25 +18,27 @@ const Map = (props) => {
     const [spotType, setSpotType] = useState("");
     const [spotUrl, setSpotUrl] = useState("");
     const [spotToModal, setSpotToModal] = useState({ name : '', latitude: 44.837789 , longitude: -0.57918 , type: "", url: ""});
-    const [searchValue, setSearchValue] = useState(false);
+    const [searchValue, setSearchValue] = useState("");
     const [isSettingSpot, setIsSettingSpot] = useState(false);
+    const [isSearching, setIsSearching] = useState(false);
     const [region, setRegion] = useState({lat: 44.837987, lon: -0.57922, latD: 0.1, lonD: 0.1,});
-    const [markers, setMarkers] = useState([
-        { name : '1', latitude: 44.837789 , longitude: -0.57918 , type: "cafe", url: "www.google.fr"},
-        { name : '2', latitude: 44.858889, longitude: -0.59918 , type: "bakery", url: "www.google.fr"},
-        { name : '3', latitude: 44.827789, longitude: -0.52918, type: "bar", url: "www.google.fr"},
-        { name : '4', latitude: 44.847789, longitude: -0.53918, type: "store", url: "www.google.fr"},
-        { name : '5', latitude: 44.817789, longitude: -0.54918, type: "park", url: "www.google.fr"},
-        { name : '6', latitude: 44.825789, longitude: -0.56918, type: "museum", url: ""},
-        { name : '7', latitude: 44.820789, longitude: -0.59918, type: "pharmacy", url: ""},
-        { name : '8', latitude: 44.840789, longitude: -0.60999, type: "post_office", url: ""},
-        { name : '9', latitude: 44.857789, longitude: -0.52918 , type: "night_club", url: ""},
-        { name : '10', latitude: 44.867789, longitude: -0.54918, type: "restaurant", url: ""},
-    ]);
+    const [markers, setMarkers] = useState([]);
+    const [copyMarkers,setCopyMarkers] = useState(markers);
 
-    const search = () => {
-      console.log('search',searchValue)  ;
+
+    const search = (text) => {
+        const newData = copyMarkers.filter(item => {
+            let itemName = `${item.name.toUpperCase()}`,
+                itemType = CATEGORIES[item.type].label.toUpperCase(),
+                textData = text.toUpperCase();
+            return itemName.indexOf(textData) > -1 || itemType.indexOf(textData) > -1;
+        });
+
+        setSearchValue(text);
+        setCopyMarkers(newData);
     };
+
+    let mapView = false;
 
     const getPinColor = (type) => {
         let category = CATEGORIES[type];
@@ -99,13 +101,24 @@ const Map = (props) => {
             }
             setMarkers(tmpSpots);
             setSpots(tmpSpots);
+            setCopyMarkers(tmpSpots);
         });
     }
 
     const openUrl = async (url) => {
-        console.log('tvoja mamamaaaaa');
         await WebBrowser.openBrowserAsync(url);
-    }
+    };
+
+    const zoomIn = (spot) => {
+        setIsSearching(false);
+        setRegion({lat: spot.latitude, lon: spot.longitude, latD: 0.01, lonD: 0.01,});
+        let initialRegion = Object.assign({}, region);
+        initialRegion["latD"] = 0.005;
+        initialRegion["lonD"] = 0.005;
+        console.log(initialRegion);
+        mapView.animateToRegion(initialRegion, 3000);
+    };
+
     useEffect( () => {
         navigator.geolocation.getCurrentPosition(
             position => {
@@ -118,11 +131,21 @@ const Map = (props) => {
 
     },[]);
 
+    useEffect(() => {
+        if (searchValue.length === 0) {
+            setIsSearching(false);
+            setCopyMarkers(spots);
+        } else {
+            setIsSearching(true);
+        }
+    },[searchValue])
+
     return (
         <View style={styles.container}>
             <MapView style={styles.map}
                      zoomEnabled={true}
                      showsUserLocation={true}
+                     ref={ref => (mapView = ref)}
                      region={{
                          latitude:region.lat,
                          longitude:region.lon,
@@ -132,22 +155,23 @@ const Map = (props) => {
                      onRegionChangeComplete={(r) => regionChange(r)}
             >
                 {
-                    markers.map((marker,key) =>(
-                        <Marker key= {key}
+                    markers.length > 0 &&
+                    (markers.map((marker,key) =>(
+                        <MapView.Marker key={key}
                                 coordinate={{ latitude: marker.latitude, longitude: marker.longitude}}
                         >
                             <View>
                                 <Icon type="MaterialCommunityIcons" name="map-marker" style={{fontSize: 35, color: getPinColor(marker.type)}} />
                             </View>
-                            <Callout>
+                            <MapView.Callout>
                                 <View style={styles.popup}>
                                     <View style={{padding:5}}>
-                                        <Text>Name: { marker.name }</Text>
-                                        <Text>Category: { marker.type }</Text>
+                                        <Text style={{fontSize: 13, fontWeight: 'bold'}}>{ marker.name }</Text>
+                                        <Text style={{marginVertical:5}}>{ CATEGORIES[marker.type].label }</Text>
                                     </View>
                                     { marker.url.length>0 && (
                                         <Button block
-                                                style={[styles.popupBtn,{color:getPinColor(marker.type)}]}
+                                                style={[styles.popupBtn,{backgroundColor: getPinColor(marker.type)}]}
                                                 onPress={() => openUrl(marker.url)}
                                         >
                                             <Text style={{color: "#fff",fontSize:20}}>Web site</Text>
@@ -165,19 +189,44 @@ const Map = (props) => {
                                         )
                                     }
                                 </View>
-                            </Callout>
+                            </MapView.Callout>
 
-                        </Marker>
-                    ))
+                        </MapView.Marker>
+                    )))
                 }
             </MapView>
             <View style={styles.searchView}>
                 <Item style={styles.searchbar}>
-                    <Input placeholder="Search" onChangeText={(text) => setSearchValue(text)} />
-                    <Button transparent light onPress={() => search()}>
-                        <Icon name="ios-search" />
-                    </Button>
+                    <Input
+                        placeholder="Search"
+                        value={searchValue}
+                        autocorrect={false}
+                        onChangeText={(text) => search(text)} />
+                    {
+                        searchValue.length === 0 ?
+                            <Button transparent light>
+                                <Icon name="ios-search" />
+                            </Button>
+                            :
+                            <Button transparent light onPress={() => setSearchValue("")}>
+                                <Icon name="close" />
+                            </Button>
+                    }
                 </Item>
+                {
+                    isSearching && (
+                        <View style={{maxHeight:'50%',backgroundColor:'#fff',borderRadius:15}}>
+                            <FlatList
+                                style={{height:'100%',paddingBottom: 15}}
+                                data={copyMarkers}
+                                renderItem={({ item }) => (
+                                    <Text style={styles.searchItem} onPress={() => zoomIn(item)}>{item.name} </Text>
+                                )}
+                                keyExtractor={item => item.name}
+                            />
+                        </View>
+                    )
+                }
             </View>
             {
                 isSettingSpot && (
@@ -237,7 +286,7 @@ const Map = (props) => {
                                 >
                                     {
                                         Object.entries(CATEGORIES).map(([key,cat]) => (
-                                            <Picker.Item label={cat.label} value={key}/>
+                                            <Picker.Item label={cat.label} value={key} key={key}/>
                                         ))
                                     }
                                 </Picker>
@@ -300,6 +349,12 @@ const styles = StyleSheet.create({
         position: 'absolute',
         top: 10,
         width: '90%'
+    },
+    searchItem: {
+        padding: 10,
+        fontSize: 14,
+        marginLeft:5,
+        height: 33,
     },
     popup: {
         minWidth: 200,
